@@ -1,8 +1,10 @@
 import bs4
+import peewee
 import requests
 from bs4 import BeautifulSoup
 from typing import NamedTuple
 import time
+from database.menu_models import Dish as DishTable, Ingredient, Tag, LnkDishTag
 from normalization import normalization as norm
 
 
@@ -14,9 +16,9 @@ class Dish(NamedTuple):
 
 
 class Ingredients(NamedTuple):
-    ingredient_names: list[str]
-    values: list[float]
-    measure_units: list[str]
+    ingredient_names: str
+    values: float
+    measure_units: str
 
 
 def get_category_urls() -> list[str]:
@@ -118,6 +120,38 @@ def get_dish_urls(cat_urls: list[str]) -> list[Dish]:
                 )
 
 
+def fill_dish_table(dish: Dish):
+    try:
+        DishTable.create(**dish._asdict())
+    except peewee.IntegrityError as er:
+        print(er, dish.dish_name)
+
+
+def get_dish_pages(table: DishTable) -> list[str]:
+    hrefs = table.select(table.href).where(table.id == 1)
+    return [h.href for h in hrefs]
+
+
+def get_dish_html():
+    for dish_url in get_dish_pages(DishTable):
+        yield requests.get(dish_url).text
+
+
+def get_ingredients():
+    ingredient_names = []
+    ingredients_value = []
+    ingredients_type = []
+    for dish in get_dish_html():
+        soup = BeautifulSoup(dish, 'lxml')
+        ingredients = soup.find('ul', class_='ingredients-lst')
+        ingredient_names = ingredients.find_all('span', class_='name')
+        ingredients_value = ingredients.find_all('span', class_='value')
+        ingredients_type = ingredients.find_all('span', class_='type')
+    for n, v, t in zip(ingredient_names, ingredients_value, ingredients_type):
+        v = norm.get_float(v.text)
+        print(n.text, v, t.text)
+
+
 def get_cooking_time(url: str):
     html = requests.get(url)
     soup = BeautifulSoup(html.text, 'lxml').find_all('div', class_='info col')
@@ -131,7 +165,7 @@ def get_cooking_time(url: str):
 
 
 if __name__ == '__main__':
-    url = get_category_urls()
+    get_ingredients()
 
 
 

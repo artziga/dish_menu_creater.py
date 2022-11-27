@@ -1,6 +1,4 @@
-import peewee
 from peewee import SqliteDatabase, Model, CharField, IntegerField, ForeignKeyField, FloatField
-from parsing.pars_menu import get_category_urls, get_dish_urls, Dish as DishObj
 
 
 class BaseModel(Model):
@@ -20,7 +18,17 @@ class Dish(BaseModel):
     dish_name = CharField(unique=False)
     href = CharField(unique=True)
     total_cooking_time = IntegerField(null=True)
-    active_cooking_time = IntegerField(null=True)
+    active_cooking_time = IntegerField(null=True)\
+
+
+
+class Tag(BaseModel):
+    tag_name = CharField(unique=True)
+
+
+class LnkDishTag(BaseModel):
+    dish_name_id = ForeignKeyField(Dish)
+    tag_name_id = ForeignKeyField(Tag)
 
 
 class Ingredient(BaseModel):
@@ -50,6 +58,8 @@ Dish.create_table()
 Ingredient.create_table()
 Recipe.create_table()
 Weight.create_table()
+Tag.create_table()
+LnkDishTag.create_table()
 
 
 def create_ears():
@@ -70,18 +80,9 @@ def create_ears():
     nuts = StoreDepartment.create(department_name='nuts')
 
 
-def fill_dish_table(dish: DishObj):
-    try:
-        Dish.create(**dish._asdict())
-    except peewee.IntegrityError as er:
-        print(er, dish.dish_name)
-
-
 def main():
-    url = get_category_urls()
-    for dish in get_dish_urls(cat_urls=url):
-        fill_dish_table(dish)
+    pass
 
 
 if __name__ == '__main__':
-    main()
+    pass
