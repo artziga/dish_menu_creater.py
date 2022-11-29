@@ -15,9 +15,9 @@ class Dish(NamedTuple):
     active_cooking_time: int
 
 
-class Ingredients(NamedTuple):
-    ingredient_names: str
-    values: float
+class Ingredient(NamedTuple):
+    ingredient_name: str
+    value: float
     measure_units: str
 
 
@@ -58,7 +58,7 @@ def get_page(url: str) -> bs4.element.ResultSet:
         page += 1
 
 
-def get_dishes(fc: bs4.element.ResultSet) -> list[dict[Dish, Ingredients]]:
+def get_dishes(fc: bs4.element.ResultSet) -> list[dict[Dish, Ingredient]]:
     dishes = []
     for card in fc:
         dish = {}
@@ -75,14 +75,14 @@ def get_dishes(fc: bs4.element.ResultSet) -> list[dict[Dish, Ingredients]]:
         for ingredient in ingredients_list:
             names = [norm.get_ing_name(name.text.lower().strip()) for name in ingredient.find_all('span', class_="name")
                      if name.text]
-            values = [norm.get_float(value.text) for value in ingredient.find_all('span', class_="value")]
+            values = [norm.get_digital_ingredient_value(value.text) for value in ingredient.find_all('span', class_="value")]
             measure_units = [measure_unit.text.strip().lower() for measure_unit in ingredient.find_all('span', class_="type")]
             dish[Dish(
                 dish_name=dish_name,
                 href=href,
                 active_cooking_time=active_duration,
                 total_cooking_time=total_duration
-            )] = Ingredients(
+            )] = Ingredient(
                 ingredient_names=names,
                 values=values,
                 measure_units=measure_units)
@@ -141,15 +141,24 @@ def get_ingredients():
     ingredient_names = []
     ingredients_value = []
     ingredients_type = []
+    ingredients = []
+    categories = []
     for dish in get_dish_html():
         soup = BeautifulSoup(dish, 'lxml')
-        ingredients = soup.find('ul', class_='ingredients-lst')
-        ingredient_names = ingredients.find_all('span', class_='name')
-        ingredients_value = ingredients.find_all('span', class_='value')
-        ingredients_type = ingredients.find_all('span', class_='type')
-    for n, v, t in zip(ingredient_names, ingredients_value, ingredients_type):
-        v = norm.get_float(v.text)
-        print(n.text, v, t.text)
+        portions_value = soup.find('span', class_='yield').text
+        ingredients_list = soup.find('ul', class_='ingredients-lst')
+        ingredient_names = ingredients_list.find_all('span', class_='name')
+        ingredients_value = ingredients_list.find_all('span', class_='value')
+        categories = soup.find('div', class_='catg').find_all('a', rel='category tag')
+        ingredients_type = ingredients_list.find_all('span', class_='type')
+    for name, value, unit in zip(ingredient_names, ingredients_value, ingredients_type):
+        val, unit = norm.ingredient_value(value.text, unit.text)
+        ingredients.append(Ingredient(
+                    ingredient_name=name.text.strip().lower(),
+                    value=val,
+                    measure_units=unit))
+    cats = [i.text for i in categories]
+    print(ingredients)
 
 
 def get_cooking_time(url: str):
