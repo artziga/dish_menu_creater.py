@@ -128,22 +128,19 @@ def fill_dish_table(dish: Dish):
 
 
 def get_dish_pages(table: DishTable) -> list[str]:
-    hrefs = table.select(table.href).where(table.id == 1)
+    hrefs = table.select(table.href).where(table.id < 3)
     return [h.href for h in hrefs]
 
 
 def get_dish_html():
     for dish_url in get_dish_pages(DishTable):
+        print('_________')
         yield requests.get(dish_url).text
 
 
 def get_ingredients():
-    ingredient_names = []
-    ingredients_value = []
-    ingredients_type = []
-    ingredients = []
-    categories = []
     for dish in get_dish_html():
+        ingredients = []
         soup = BeautifulSoup(dish, 'lxml')
         portions_value = soup.find('span', class_='yield').text
         ingredients_list = soup.find('ul', class_='ingredients-lst')
@@ -151,14 +148,15 @@ def get_ingredients():
         ingredients_value = ingredients_list.find_all('span', class_='value')
         categories = soup.find('div', class_='catg').find_all('a', rel='category tag')
         ingredients_type = ingredients_list.find_all('span', class_='type')
-    for name, value, unit in zip(ingredient_names, ingredients_value, ingredients_type):
-        val, unit = norm.ingredient_value(value.text, unit.text)
-        ingredients.append(Ingredient(
-                    ingredient_name=name.text.strip().lower(),
-                    value=val,
-                    measure_units=unit))
-    cats = [i.text for i in categories]
-    print(ingredients)
+        for name, value, unit in zip(ingredient_names, ingredients_value, ingredients_type):
+            val, unit = norm.ingredient_value(value.text, unit.text)
+            ingredients.append(Ingredient(
+                        ingredient_name=name.text.strip().lower(),
+                        value=val,
+                        measure_units=unit))
+        cats = [i.text for i in categories]
+        for i in ingredients:
+            print(i)
 
 
 def get_cooking_time(url: str):
