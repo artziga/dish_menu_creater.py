@@ -1,11 +1,7 @@
 import re
-from typing import NamedTuple, Type, Tuple, Any
+from database.data_structure import MeasureUnit, IngredientValue
 
 
-class MeasureUnit(NamedTuple):
-    multiplier: int
-    unit: str
-    note: str or None
 def get_minutes(cooking_time: str) -> int:
     words = cooking_time.strip().split(' ')
     if len(words) == 2:
@@ -17,8 +13,8 @@ def get_minutes(cooking_time: str) -> int:
         return int(words[0]) * int(words[2])
 
 
-def get_digital_ingredient_value(value: str, mul: int) -> float:
-    try:
+def get_digital_ingredient_value(value: str, mul: int) -> float | None:
+    if value:
         value = value
         if value == '½':
             return 0.5 * mul
@@ -36,8 +32,7 @@ def get_digital_ingredient_value(value: str, mul: int) -> float:
                 return round(float(digits[0].replace(',', '.')) / float(digits[1].replace(',', '.')), 2) * mul
             except IndexError:
                 return float(value.replace(',', '.')) * mul
-    except ValueError as err:
-        print(err)
+    return None
 
 
 def types_normalization(starting_type: str) -> MeasureUnit:
@@ -53,13 +48,19 @@ def types_normalization(starting_type: str) -> MeasureUnit:
     match = re.search(r'(?P<l>(^|\s)л\.?\s)(?P<note>.*)', starting_type)
     if match:
         return MeasureUnit(multiplier=1000, unit='мл', note=match['note'])
+    match = re.search(r'(?P<some>(^|\s)\w\w\.\w?\.?\s)(?P<note>.*)', starting_type)
+    if match:
+        return MeasureUnit(multiplier=1, unit=match['some'], note=match['note'])
     return MeasureUnit(multiplier=1, unit=starting_type, note=None)
 
 
-def ingredient_value(value: str, measure: str) -> tuple[float, str, str or None]:
+def ingredient_value(value: str, measure: str) -> IngredientValue:
     mul, new_type, note = types_normalization(measure.lower())
     value = get_digital_ingredient_value(value=value, mul=mul)
-    return value, new_type, note
+    if not value:
+        value = new_type
+        new_type = None
+    return IngredientValue(value=value, measure_unit=new_type, note=note)
 
 
 def get_ing_name(name: str) -> str:
