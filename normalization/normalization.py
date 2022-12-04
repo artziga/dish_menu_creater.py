@@ -1,6 +1,12 @@
 import re
-def get_minutes\
-                (cooking_time: str) -> int:
+from typing import NamedTuple, Type, Tuple, Any
+
+
+class MeasureUnit(NamedTuple):
+    multiplier: int
+    unit: str
+    note: str or None
+def get_minutes(cooking_time: str) -> int:
     words = cooking_time.strip().split(' ')
     if len(words) == 2:
         if re.search('минут', words[-1]):
@@ -13,7 +19,7 @@ def get_minutes\
 
 def get_digital_ingredient_value(value: str, mul: int) -> float:
     try:
-        value = value.strip()
+        value = value
         if value == '½':
             return 0.5 * mul
         elif value == '¼':
@@ -34,22 +40,26 @@ def get_digital_ingredient_value(value: str, mul: int) -> float:
         print(err)
 
 
-def types_normalization(starting_type: str) -> tuple[int, str]:
-    if re.search(r'\sг\s', starting_type) or re.search(r'^г\s', starting_type.replace('.',' ')):
-        return 1, 'г'
-    if re.search(r'\sкг\s', starting_type) or re.search(r'^кг\s', starting_type.replace('.',' ')):
-        return 1000, 'г'
-    if re.search(r'\sмл\s', starting_type) or re.search(r'^мл\s', starting_type.replace('.',' ')):
-        return 1, 'мл'
-    if re.search(r'\sл\s', starting_type) or re.search(r'^л\s', starting_type.replace('.',' ')):
-        return 1000, 'мл'
-    return 1, starting_type
+def types_normalization(starting_type: str) -> MeasureUnit:
+    match = re.search(r'(?P<g>(^|\s)гр?\.?\s)(?P<note>.*)', starting_type)
+    if match:
+        return MeasureUnit(multiplier=1, unit='г', note=match['note'])
+    match = re.search(r'(?P<kg>(^|\s)кг\.?\s)(?P<note>.*)', starting_type)
+    if match:
+        return MeasureUnit(multiplier=1000, unit='г', note=match['note'])
+    match = re.search(r'(?P<ml>(^|\s)мл\.?\s)(?P<note>.*)', starting_type)
+    if match:
+        return MeasureUnit(multiplier=1, unit='мл', note=match['note'])
+    match = re.search(r'(?P<l>(^|\s)л\.?\s)(?P<note>.*)', starting_type)
+    if match:
+        return MeasureUnit(multiplier=1000, unit='мл', note=match['note'])
+    return MeasureUnit(multiplier=1, unit=starting_type, note=None)
 
 
-def ingredient_value(value: str, measure: str) -> tuple[float, str]:
-    mul, new_type = types_normalization(measure.lower())
+def ingredient_value(value: str, measure: str) -> tuple[float, str, str or None]:
+    mul, new_type, note = types_normalization(measure.lower())
     value = get_digital_ingredient_value(value=value, mul=mul)
-    return value, new_type
+    return value, new_type, note
 
 
 def get_ing_name(name: str) -> str:

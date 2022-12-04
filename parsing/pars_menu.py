@@ -127,8 +127,8 @@ def fill_dish_table(dish: Dish):
         print(er, dish.dish_name)
 
 
-def get_dish_pages(table: DishTable) -> list[str]:
-    hrefs = table.select(table.href).where(table.id < 3)
+def get_dish_pages(table: type[DishTable]) -> list[str]:
+    hrefs = table.select(table.href).where(table.id < 10)
     return [h.href for h in hrefs]
 
 
@@ -138,22 +138,42 @@ def get_dish_html():
         yield requests.get(dish_url).text
 
 
-def get_ingredients():
+def get_ingredients(
+        ingredient_names: bs4.element.ResultSet,
+        ingredients_value: bs4.element.ResultSet,
+        ingredients_type: bs4.element.ResultSet) -> list:
+    ingredients = []
+    for name, value, unit in zip(ingredient_names, ingredients_value, ingredients_type):
+        val, unit, note = norm.ingredient_value(value.text, unit.text)
+        if note:
+            ingredients.append((Ingredient(
+                ingredient_name=name.text.strip().lower(),
+                value=val,
+                measure_units=unit), note))
+        else:
+            ingredients.append(Ingredient(
+                ingredient_name=name.text.strip().lower(),
+                value=val,
+                measure_units=unit))
+
+    return ingredients
+
+
+def parse_dish_page():
     for dish in get_dish_html():
-        ingredients = []
         soup = BeautifulSoup(dish, 'lxml')
-        portions_value = soup.find('span', class_='yield').text
+        try:
+            portions_value = soup.find('span', class_='yield').text
+        except AttributeError:
+            with open('1.html', 'w', encoding='utf-8') as f:
+                f.write(dish)
+
         ingredients_list = soup.find('ul', class_='ingredients-lst')
         ingredient_names = ingredients_list.find_all('span', class_='name')
         ingredients_value = ingredients_list.find_all('span', class_='value')
-        categories = soup.find('div', class_='catg').find_all('a', rel='category tag')
         ingredients_type = ingredients_list.find_all('span', class_='type')
-        for name, value, unit in zip(ingredient_names, ingredients_value, ingredients_type):
-            val, unit = norm.ingredient_value(value.text, unit.text)
-            ingredients.append(Ingredient(
-                        ingredient_name=name.text.strip().lower(),
-                        value=val,
-                        measure_units=unit))
+        ingredients = get_ingredients(ingredient_names, ingredients_value, ingredients_type)
+        categories = soup.find('div', class_='catg').find_all('a', rel='category tag')
         cats = [i.text for i in categories]
         for i in ingredients:
             print(i)
@@ -172,7 +192,7 @@ def get_cooking_time(url: str):
 
 
 if __name__ == '__main__':
-    get_ingredients()
+    parse_dish_page()
 
 
 

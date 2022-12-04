@@ -18,8 +18,7 @@ class Dish(BaseModel):
     dish_name = CharField(unique=False)
     href = CharField(unique=True)
     total_cooking_time = IntegerField(null=True)
-    active_cooking_time = IntegerField(null=True)\
-
+    active_cooking_time = IntegerField(null=True)
 
 
 class Tag(BaseModel):
@@ -45,6 +44,11 @@ class Recipe(BaseModel):
     ingredient_name_id = ForeignKeyField(Ingredient)
     quantity = FloatField()
     measure_unit = CharField(null=True)
+
+
+class Note(BaseModel):
+    recipe_ingredient_id = ForeignKeyField(Recipe)
+    note = CharField
 
 
 class Weight(BaseModel):
