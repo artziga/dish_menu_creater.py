@@ -16,7 +16,7 @@ def get_minutes(cooking_time: str) -> int:
 def get_digital_ingredient_value(value: str, mul: int) -> float | None:
     if value:
         value = value
-        if value == '½':
+        if value == '½' or r'1\\2':
             return 0.5 * mul
         elif value == '¼':
             return 0.25 * mul
@@ -32,6 +32,8 @@ def get_digital_ingredient_value(value: str, mul: int) -> float | None:
                 return round(float(digits[0].replace(',', '.')) / float(digits[1].replace(',', '.')), 2) * mul
             except IndexError:
                 return float(value.replace(',', '.')) * mul
+            except ValueError:
+                return float(value.split('-')[0])
     return None
 
 

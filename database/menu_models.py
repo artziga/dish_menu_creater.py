@@ -31,6 +31,11 @@ class LnkDishTag(BaseModel):
     tag_name_id = ForeignKeyField(Tag)
 
 
+class LnkEatingTag(BaseModel):
+    eating_name_id = FloatField(Eating)
+    tag_name_id = ForeignKeyField(Tag)
+
+
 class Ingredient(BaseModel):
     ingredient_name = CharField(unique=True)
     protein_value = IntegerField(null=True)
@@ -38,6 +43,19 @@ class Ingredient(BaseModel):
     carbohydrates_value = IntegerField(null=True)
     energy_value = IntegerField(null=True)
     department_name_id = ForeignKeyField(StoreDepartment, null=True)
+
+
+class OldIngredient(Model):
+    ingredient_name = CharField(unique=True)
+    protein_value = IntegerField(null=True)
+    fats_value = IntegerField(null=True)
+    carbohydrates_value = IntegerField(null=True)
+    energy_value = IntegerField(null=True)
+    department_name_id = ForeignKeyField(StoreDepartment, null=True)
+
+    class Meta:
+        database = SqliteDatabase(r'C:\Users\User\PycharmProjects\food\database\архив\menu.db')
+        table_name = 'ingredient'
 
 
 class Recipe(BaseModel):
@@ -61,6 +79,7 @@ Recipe.create_table()
 Weight.create_table()
 Tag.create_table()
 LnkDishTag.create_table()
+LnkEatingTag.create_table()
 
 
 def create_ears():

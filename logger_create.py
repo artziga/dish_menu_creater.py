@@ -8,7 +8,7 @@ def init_logger(name):
     sh = logging.StreamHandler()
     sh.setFormatter(logging.Formatter(FORMAT))
     sh.setLevel(logging.DEBUG)
-    fh = logging.FileHandler('log.txt')
+    fh = logging.FileHandler('log.txt', encoding='utf-8')
     fh.setFormatter(logging.Formatter(FORMAT))
     fh.setLevel(logging.INFO)
     logger.addHandler(sh)

@@ -1,12 +1,13 @@
-from peewee import SqliteDatabase, Model, CharField, IntegerField, FloatField
+from peewee import SqliteDatabase, Model, CharField, IntegerField, FloatField, IntegrityError
 from parsing.pars_energy import pars_energy
+from parsing.health import get_nutrients
 
 db = SqliteDatabase(r'..\database\menu.db')
 
 
 class Energy(Model):
     name = CharField(unique=True)
-    prot = FloatField()
+    protein = FloatField()
     fats = FloatField()
     carbohydrates = FloatField()
     calories = IntegerField()
@@ -18,10 +19,15 @@ class Energy(Model):
 Energy.create_table()
 
 
-def get_energy():
-    for en in pars_energy():
-        Energy.insert(en).execute()
+def fill_energy(energies):
+    for en in energies:
+        try:
+            Energy.insert(en).execute()
+        except IntegrityError:
+            print(en)
 
 
 if __name__ == '__main__':
-    get_energy()
+    energies = get_nutrients()
+    for energy in energies:
+        fill_energy(energy)

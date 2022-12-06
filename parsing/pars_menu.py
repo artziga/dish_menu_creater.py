@@ -174,7 +174,7 @@ def fill_ingredients(ingredients: list[Ingredient], dish) -> None:
             ing = IngredientTable.create(ingredient_name=ingredient.ingredient_name)
         except peewee.IntegrityError as err:
             ing = IngredientTable.get(ingredient_name=ingredient.ingredient_name)
-            logger.debug(f'{ingredient.ingredient_name} уже есть в базе')
+            #logger.debug(f'{ingredient.ingredient_name} уже есть в базе')
         RecipeTable.create(
             quantity=ingredient.value,
             measure_unit=ingredient.measure_units,
@@ -189,21 +189,27 @@ def fill_categories(dish, categories: list) -> None:
             cat = TagTable.create(tag_name=category)
         except peewee.IntegrityError as err:
             cat = TagTable.get(tag_name=category)
-            logger.debug(f'Категория {category} уже есть в добавлена')
+            #logger.debug(f'Категория {category} уже есть в добавлена')
         LnkDishTagTable.create(dish_name_id=dish, tag_name_id=cat)
 
 
-def fill_recipes_info():
-    dishes = DishTable.select(DishTable.id, DishTable.href).where(DishTable.id < 6)
+def fill_recipes_info(num):
+    dishes = DishTable.select(DishTable.id, DishTable.dish_name, DishTable.href).order_by(DishTable.id)
     for dish in dishes:
-        dish_info = parse_dish_page(dish.href)
-        DishTable.portions_value = dish_info.portions_value
-        fill_ingredients(dish=dish, ingredients=dish_info.ingredients)
-        fill_categories(dish=dish, categories=dish_info.categories)
-
+        logger.debug(f'собирается блюдо {dish.dish_name}\n{dish.id} из {len(dishes)}, {round(dish.id/len(dishes)*100, 2)}%')
+        if not RecipeTable.select(RecipeTable.dish_name_id).where(RecipeTable.dish_name_id == dish.id):
+            try:
+                dish_info = parse_dish_page(dish.href)
+            except AttributeError or ValueError:
+                logger.warning(f'Не удалось собрать данные для блюда {dish.dish_name} {dish.href}')
+                continue
+            DishTable.portions_value = dish_info.portions_value
+            fill_ingredients(dish=dish, ingredients=dish_info.ingredients)
+            fill_categories(dish=dish, categories=dish_info.categories)
+            time.sleep(1)
 
 if __name__ == '__main__':
-    fill_recipes_info()
+    fill_recipes_info(6)
 
 
 

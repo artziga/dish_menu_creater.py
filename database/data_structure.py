@@ -37,3 +37,11 @@ class DishInfo(NamedTuple):
     portions_value: int | None
     categories: list[str]
 
+
+class Nutrient(NamedTuple):
+    name: str
+    calories: int
+    protein: float
+    fats: float
+    carbohydrates: float
+
