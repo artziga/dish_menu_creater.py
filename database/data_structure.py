@@ -45,3 +45,17 @@ class Nutrient(NamedTuple):
     fats: float
     carbohydrates: float
 
+
+class User(NamedTuple):
+    name: str
+    age: int
+    weight: int
+    height: int
+    gender: bool
+    physical_activity: int
+
+
+class Metabolism(NamedTuple):
+    basic_metabolism: float
+    daily_metabolism: float
+
