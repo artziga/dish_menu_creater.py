@@ -1,7 +1,7 @@
 import random
 from peewee import fn, DoesNotExist
 from energy_models import Energy
-from menu_models import Ingredient, Recipe, Weight, OldIngredient, Tag, Eating, LnkEatingTag
+from menu_models import Ingredient, Recipe, Weight, OldIngredient, Tag, Eating, LnkEatingTag, OldWeight
 from data_structure import Nutrient
 from fuzzywuzzy import fuzz, process
 from urllib.parse import quote
@@ -85,16 +85,40 @@ def upd_updown_en(ac: dict):
         ingred.save()
 
 
-def kg_to_g():
-    prods = Recipe\
-        .update({Recipe.quantity: Recipe.quantity * 1000, Recipe.measure_unit: 'мл'})\
-        .where(Recipe.measure_unit == 'л.')
-    prods.execute()
+def get_piece_products():
+    piece_ingredients = []
+    r = (Ingredient.select(Ingredient.ingredient_name)
+         .join(Recipe)
+         .where(Recipe.measure_unit.contains('шт')).distinct())
+    for p_p in r:
+        if p_p.ingredient_name:
+            piece_ingredients.append(p_p.ingredient_name)
+    return piece_ingredients
+
+
+def get_old_weight(name):
+    r = (OldWeight.select(OldWeight.weight)
+         .join(OldIngredient)
+         .where(OldIngredient.ingredient_name == name).get())
+    return r.weight
+
+
+def fill_from_old_weight():
+    piece_ingredients = get_piece_products()
+    print(len(piece_ingredients))
+    for p_p in piece_ingredients:
+        ingredient_id = Ingredient.get(Ingredient.ingredient_name == p_p)
+        try:
+            weight = get_old_weight(p_p)
+        except DoesNotExist:
+            Weight.create(ingredient_id=ingredient_id, weight=None)
+            continue
+        Weight.create(ingredient_id=ingredient_id, weight=weight)
 
 
 def get_weight():
-    prods = Weight.select(Weight.ingredient_id.alias('i_id'), Ingredient.ingredient_name)\
-        .join(Ingredient)\
+    prods = Weight.select(Weight.ingredient_id.alias('i_id'), Ingredient.ingredient_name) \
+        .join(Ingredient) \
         .where(Weight.weight.is_null())
     rem = len(prods)
     for prod in prods:
@@ -107,8 +131,16 @@ def get_weight():
         rem -= 1
 
 
-def get_old_ingredients(ingredient_name):
-    old_ingredient = OldIngredient.select().where(OldIngredient.ingredient_name == ingredient_name)
+def connect_weight():
+    weight = OldWeight.select(OldWeight.weight, OldIngredient.ingredient_name) \
+        .join(OldIngredient, attr='ingr') \
+        .where(OldWeight.weight.is_null(False))
+    for i in weight:
+        if i:
+            print(i.weight, i.ingr.ingredient_name)
+    # prods = Weight.select(Weight.ingredient_id.alias('i_id'), Ingredient.ingredient_name) \
+    #     .join(Ingredient) \
+    #     .where(Weight.weight.is_null())
 
 
 def fill_from_old_db():
@@ -127,7 +159,6 @@ def fill_from_old_db():
 
 
 def connect_tags():
-    eatings = Eating.select(Eating.id, Eating.eating_name)
     tags = Tag.select(Tag.id, Tag.tag_name)
     for tag in tags:
         if 'завтрак' in tag.tag_name.lower().strip():
@@ -147,25 +178,26 @@ def connect_tags():
             link = LnkEatingTag.create(eating_name_id=eating_id, tag_name_id=tag.id)
             link.save()
         if 'десерт' in tag.tag_name.lower().strip() \
-                or 'торт' in tag.tag_name.lower().strip()\
-                or 'печенье' in tag.tag_name.lower().strip()\
+                or 'торт' in tag.tag_name.lower().strip() \
+                or 'печенье' in tag.tag_name.lower().strip() \
                 or 'пирожн' in tag.tag_name.lower().strip():
             eating_id = Eating.select(Eating.id).where(Eating.eating_name == 'dessert').get()
             link = LnkEatingTag.create(eating_name_id=eating_id, tag_name_id=tag.id)
             link.save()
 
 
-
 if __name__ == '__main__':
-    #get_weight()
+    # get_weight()
     i, e = get_data()  # собираем данные из базы данных
     # sames, difs = get_ing_without_energy(i, e) # определяем продукты котрые есть и в ингридиентах и в базе калорий, а так же те ктоторые отличаются
     # upd_same_en(sames) # записываем калории для идентичных продуктов
     # ac = get_updown_en(i, e) # определяем продукты названия котрых отличаются только порядком слов
     # upd_updown_en(ac) # записываем в базу продукты названия котрых отличаются только порядком слов
-    # get_empty_ings(e)  # запускаем ручное заполнение
-    connect_tags()
     # fill_from_old_db()
+    # get_empty_ings(e)  # запускаем ручное заполнение
+    # connect_tags()
+    fill_from_old_weight()
+    # connect_weight()
 # upd_updown_en(ac)
 
 

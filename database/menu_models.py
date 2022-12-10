@@ -20,6 +20,7 @@ class Dish(BaseModel):
     total_cooking_time = IntegerField(null=True)
     active_cooking_time = IntegerField(null=True)
     portions_value = IntegerField(null=True)
+    calories = IntegerField(null=True)
 
 
 class Tag(BaseModel):
@@ -69,6 +70,15 @@ class Recipe(BaseModel):
 class Weight(BaseModel):
     ingredient_id = ForeignKeyField(Ingredient)
     weight = FloatField(null=True)
+
+
+class OldWeight(BaseModel):
+    ingredient_id = ForeignKeyField(OldIngredient)
+    weight = FloatField(null=True)
+
+    class Meta:
+        database = SqliteDatabase(r'C:\Users\User\PycharmProjects\food\database\архив\menu.db')
+        table_name = 'weight'
 
 
 Eating.create_table()

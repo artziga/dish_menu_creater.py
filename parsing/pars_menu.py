@@ -123,11 +123,6 @@ def fill_dish_table(dish: Dish):
         logger.debug(er, dish.dish_name)
 
 
-def get_dish_pages(table: type[DishTable]) -> list[str]:
-    hrefs = table.select(table.href).where(table.id == 2599)
-    return [h.href for h in hrefs]
-
-
 def get_dish_html(dish_url) -> DishPage:
     return DishPage(url=dish_url, html=requests.get(dish_url).text)
 
@@ -144,7 +139,7 @@ def get_ingredients(
             logger.warning(err)
             raise ValueError
         ingredients.append(Ingredient(
-            ingredient_name=name.text.strip().lower(),
+            ingredient_name=norm.get_ing_name(name.text.lower().strip()),
             value=val,
             measure_units=unit,
             note=note))
@@ -165,7 +160,11 @@ def parse_dish_page(href) -> DishInfo:
     ingredients_type = ingredients_list.find_all('span', class_='type')
     ingredients = get_ingredients(ingredient_names, ingredients_value, ingredients_type)
     categories = [i.text for i in soup.find('div', class_='catg').find_all('a', rel='category tag')]
-    return DishInfo(ingredients=ingredients, portions_value=portions_value, categories=categories)
+    try:
+        calories = int(soup.find('span', class_='calories').text)
+    except ValueError:
+        calories = None
+    return DishInfo(ingredients=ingredients, portions_value=portions_value, categories=categories, calories=calories)
 
 
 def fill_ingredients(ingredients: list[Ingredient], dish) -> None:
@@ -203,12 +202,19 @@ def fill_recipes_info(num):
             except AttributeError or ValueError:
                 logger.warning(f'Не удалось собрать данные для блюда {dish.dish_name} {dish.href}')
                 continue
-            DishTable.portions_value = dish_info.portions_value
+            dish.portions_value = dish_info.portions_value
+            dish.calories = dish_info.calories
+            dish.save()
             fill_ingredients(dish=dish, ingredients=dish_info.ingredients)
             fill_categories(dish=dish, categories=dish_info.categories)
+
             time.sleep(1)
 
+
 if __name__ == '__main__':
+    # cat_urls = get_category_urls()
+    # for dish in get_dish_urls(cat_urls=cat_urls):
+    #     fill_dish_table(dish=dish)
     fill_recipes_info(6)
 
 
