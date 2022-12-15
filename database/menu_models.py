@@ -33,7 +33,7 @@ class LnkDishTag(BaseModel):
 
 
 class LnkEatingTag(BaseModel):
-    eating_name_id = FloatField(Eating)
+    eating_name_id = ForeignKeyField(Eating)
     tag_name_id = ForeignKeyField(Tag)
 
 
