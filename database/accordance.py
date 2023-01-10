@@ -195,8 +195,8 @@ if __name__ == '__main__':
     # upd_updown_en(ac) # записываем в базу продукты названия котрых отличаются только порядком слов
     # fill_from_old_db()
     # get_empty_ings(e)  # запускаем ручное заполнение
-    # connect_tags()
-    fill_from_old_weight()
+    connect_tags()
+    # fill_from_old_weight()
     # connect_weight()
 # upd_updown_en(ac)
 

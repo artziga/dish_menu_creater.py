@@ -1,1 +1,0 @@
-print('        dsaA '.strip().lower())

@@ -3,11 +3,11 @@ import logging
 
 def init_logger(name):
     logger = logging.getLogger(name)
-    FORMAT = '%(asctime)s :: %(name)s:%(lineno)s :: %(levelname)s :: %(message)s'
+    FORMAT = '%(message)s'
     logger.setLevel(logging.DEBUG)
     sh = logging.StreamHandler()
     sh.setFormatter(logging.Formatter(FORMAT))
-    sh.setLevel(logging.DEBUG)
+    sh.setLevel(logging.INFO)
     fh = logging.FileHandler('log.txt', encoding='utf-8')
     fh.setFormatter(logging.Formatter(FORMAT))
     fh.setLevel(logging.INFO)

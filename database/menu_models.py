@@ -3,7 +3,7 @@ from peewee import SqliteDatabase, Model, CharField, IntegerField, ForeignKeyFie
 
 class BaseModel(Model):
     class Meta:
-        database = SqliteDatabase(r'..\database\menu.db')
+        database = SqliteDatabase(r'../database/menu.db')
 
 
 class Eating(BaseModel):
@@ -55,7 +55,7 @@ class OldIngredient(Model):
     department_name_id = ForeignKeyField(StoreDepartment, null=True)
 
     class Meta:
-        database = SqliteDatabase(r'C:\Users\User\PycharmProjects\food\database\архив\menu.db')
+        database = SqliteDatabase(r'/home/zai/PycharmProjects/dish_menu_creater.py/database/архив/menu.db')
         table_name = 'ingredient'
 
 
@@ -77,7 +77,7 @@ class OldWeight(BaseModel):
     weight = FloatField(null=True)
 
     class Meta:
-        database = SqliteDatabase(r'C:\Users\User\PycharmProjects\food\database\архив\menu.db')
+        database = SqliteDatabase(r'/home/zai/PycharmProjects/dish_menu_creater.py/database/архив/menu.db')
         table_name = 'weight'
 
 
@@ -115,4 +115,8 @@ def main():
 
 
 if __name__ == '__main__':
-    pass
+    Eating.create(eating_name='breakfast')
+    Eating.create(eating_name='second_dish')
+    Eating.create(eating_name='soup')
+    Eating.create(eating_name='salad')
+    Eating.create(eating_name='dessert')

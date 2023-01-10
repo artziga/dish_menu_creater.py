@@ -2,7 +2,7 @@ from peewee import SqliteDatabase, Model, CharField, IntegerField, FloatField, I
 from parsing.pars_energy import pars_energy
 from parsing.health import get_nutrients
 
-db = SqliteDatabase(r'..\database\menu.db')
+db = SqliteDatabase(r'../database/menu.db')
 
 
 class Energy(Model):
@@ -28,6 +28,6 @@ def fill_energy(energies):
 
 
 if __name__ == '__main__':
-    energies = get_nutrients()
+    energies = pars_energy()
     for energy in energies:
         fill_energy(energy)

@@ -1,5 +1,5 @@
 from typing import NamedTuple
-
+from database.menu_models import Dish as DishTable
 
 class Dish(NamedTuple):
     dish_name: str
@@ -58,4 +58,13 @@ class User(NamedTuple):
 class Metabolism(NamedTuple):
     basic_metabolism: float
     daily_metabolism: float
+
+
+class EatingSet(NamedTuple):
+    dish: DishTable
+    second_dish: DishTable = None
+
+
+class OnlyLunch(NamedTuple):
+    dish: DishTable
 
