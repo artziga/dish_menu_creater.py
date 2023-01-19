@@ -15,25 +15,35 @@ def get_minutes(cooking_time: str) -> int:
 
 def get_digital_ingredient_value(value: str, mul: int) -> float | None:
     if value:
-        value = value.strip()
-        if value in ['½', r'1\2', r'от 1/2', '1/2-1']:
-            return 0.5 * mul
-        elif value in ['¼', r'1\4']:
+        value = value.replace(' ', '')
+        if value in ['¼', r'1\4']:
             return 0.25 * mul
-        elif value in ['1 ¼']:
-            return 1.25 * mul
+        elif value in ['1/3', '1/3-1/2']:
+            return 0.33 * mul
+        elif value in ['½', r'1\2', r'от 1/2', '1/2-1', ')0,5']:
+            return 0.5 * mul
         elif value in ['¾']:
             return 0.75 * mul
-        elif value in ['1 ½', '1 1/2']:
+        elif value in ['от1']:
+            return 1 * mul
+        elif value in ['1 ¼']:
+            return 1.25 * mul
+        elif value in ['1 1/3', '1\xa01/3']:
+            return 1.33 * mul
+        elif value in ['1 ½', '1 1/2', '1,3-1,6', '1½', '1и1/2']:
             return 1.5 * mul
         elif value == '1 3/4':
             return 1.75 * mul
-        elif value == '3 1/2':
-            return 3.5 * mul
-        elif value in ['1/3', '1/3-1/2']:
-            return 0.33 * mul
+        elif value in ['2 ½', '2½']:
+            return 2.5 * mul
         elif value == '3 столовых ложки':
             return 3 * mul
+        elif value == '3 1/2':
+            return 3.5 * mul
+        elif value == '4 1/2':
+            return 4.5 * mul
+        elif value == '2 2/3':
+            return 2.66 * mul
         try:
             return float(value) * mul
         except ValueError:
@@ -46,7 +56,7 @@ def get_digital_ingredient_value(value: str, mul: int) -> float | None:
             except IndexError:
                 return float(value.replace(',', '.')) * mul
             except ValueError:
-                return float(value.split('-')[0])
+                return float(value.split('-')[0].replace(',', '.'))
 
     return None
 

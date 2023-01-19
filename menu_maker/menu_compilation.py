@@ -9,10 +9,13 @@ i = 1
 
 
 class DayMenu:
-    def __init__(self, target: str = ''):
-        self._breakfast = Eating(metabolism=METABOLISM, cooking_time=20, category='breakfast')
+    def __init__(self, target: str = '', breakfast_to_use_id=None, lunch_to_use_id=None, dinner_to_use_id=None):
+        self._breakfast = Eating(metabolism=METABOLISM, cooking_time=20, category='breakfast', alias='breakfast',
+                                 dish_to_use_id=breakfast_to_use_id)
         self._lunch = Lunch(metabolism=METABOLISM, cooking_time=30)
-        self._dinner = Eating(metabolism=METABOLISM, cooking_time=20, category='second_dish', alias='dinner')
+        print(self._lunch.dish)
+        self._dinner = Eating(metabolism=METABOLISM, cooking_time=20, category='second_dish', alias='dinner',
+                              dish_to_use_id=dinner_to_use_id)
         self.day_menu_variants = self.get_menu(100)
 
     def get_menu(self, limit):
@@ -34,7 +37,6 @@ class DayMenu:
                            .between(METABOLISM * 0.99, METABOLISM * 1.01))
                     .order_by(fn.random())
                     .limit(limit))
-        print(day_menu)
         return day_menu
 
 
@@ -47,7 +49,8 @@ class Eating:
                  hysteresis: float = 0.15,
                  part_from_daily_calories: float = 0.33,
                  category: str = None,
-                 alias: str = None):
+                 alias: str = None,
+                 dish_to_use_id=None):
         self.dish_set: EatingSet | None = None
         self._high_hysteresis = 1 + hysteresis  # допуск отклонения калорий от целевого значения вверх
         self._low_hysteresis = 1 - hysteresis  # допуск отклонения калорий от целевого значения вниз
@@ -56,6 +59,7 @@ class Eating:
         self._cooking_time = cooking_time  # максимальное время готовки
         self._low_calories = self._calories_needed * self._low_hysteresis
         self._high_calories = self._calories_needed * self._high_hysteresis
+        self._dish_to_use_id = dish_to_use_id
         if category is None:
             self._category = random.choice(['breakfast', 'second_dish', 'soup', 'salad', 'dessert', 'snack'])
         else:
@@ -63,7 +67,14 @@ class Eating:
         self.dish = self.get_dish(category=self._category, alias=alias)
 
     def get_dish(self, category: str = None, alias: str = None, low_calories=None, high_calories=None, limit=100):
-        """Функция забирает из БД случайное блюдо, подходящие по указанным фильтрам"""
+        """Функция забирает из БД варианты блюд, подходящих по указанным фильтрам"""
+        if self._dish_to_use_id is not None:
+            return (Dish.alias(alias).select(Dish.alias(alias).id,
+                                             Dish.alias(alias).dish_name,
+                                             Dish.alias(alias).href,
+                                             Dish.alias(alias).calories)
+                    .where(Dish.alias(alias).id == self._dish_to_use_id)
+                    .alias(alias))
         if low_calories is None:
             low_calories = self._low_calories
         if high_calories is None:
@@ -110,7 +121,10 @@ class Lunch(Eating):
         second_dishes = super().get_dish('second_dish', low_calories=0, high_calories=1000)
         soups = super().get_dish(category='soup', low_calories=0, high_calories=1000)
         second_dishes_only = super().get_dish('second_dish', limit=70)
-        soups_with_second_dishes = (Dish.select(Dish.id,
+        soups_with_second_dishes = (Dish.select(Dish.id.alias('second_dish_id'),
+                                                Dish.dish_name.alias('second_dish_name'),
+                                                Dish.href.alias('second_dish_href'),
+                                                soups.c.id.alias('soup_id'),
                                                 soups.c.dish_name.concat('||').concat(Dish.dish_name).alias(
                                                     'dish_name'),
                                                 (soups.c.href.concat(' || ').concat(Dish.href)).alias('href'),
@@ -124,7 +138,7 @@ class Lunch(Eating):
                                     .order_by(fn.random())
                                     .limit(30))
 
-        union = second_dishes_only | soups_with_second_dishes
+        # union = Dish.select().from_(second_dishes_only) | Dish.select().from_(soups_with_second_dishes)
         # print(union)
         # print(union.count())
         dice = random.randint(1, 100)
@@ -144,12 +158,9 @@ el = Lunch(metabolism=METABOLISM)
 days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 for day in days:
     print(day)
-    a = DayMenu()
+    a = DayMenu(breakfast_to_use_id=152, dinner_to_use_id=1950)
     menu = a.day_menu_variants.get()
     print(f'Завтрак: {menu.dish_name}  {menu.href}, '
           f'Обед: {menu.lunch_name}  {menu.lunch_href}, '
           f'Ужин: {menu.dinner_name}  {menu.dinner_href}, '
           f'Каллорий за день: {menu.sum}')
-
-
-

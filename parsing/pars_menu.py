@@ -159,7 +159,10 @@ def parse_dish_page(href) -> DishInfo:
     ingredient_names = ingredients_list.find_all('span', class_='name')
     ingredients_value = ingredients_list.find_all('span', class_='value')
     ingredients_type = ingredients_list.find_all('span', class_='type')
-    ingredients = get_ingredients(ingredient_names, ingredients_value, ingredients_type)
+    try:
+        ingredients = get_ingredients(ingredient_names, ingredients_value, ingredients_type)
+    except ValueError:
+        logger.error('Не удалось определить пропорцию', href)
     categories = [i.text for i in soup.find('div', class_='catg').find_all('a', rel='category tag')]
     try:
         calories = int(soup.find('span', class_='calories').text)
