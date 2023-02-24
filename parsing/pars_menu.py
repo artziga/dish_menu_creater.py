@@ -7,7 +7,8 @@ from database.menu_models import Dish as DishTable,\
     Recipe as RecipeTable,\
     Ingredient as IngredientTable, \
     Tag as TagTable, \
-    LnkDishTag as LnkDishTagTable
+    LnkDishTag as LnkDishTagTable,\
+    FoodDish as DjangoDish
 from normalization import normalization as norm
 from database.data_structure import Dish, DishPage, Ingredient, DishInfo
 from logger_create import init_logger
@@ -206,7 +207,7 @@ def fill_recipes_info():
             except AttributeError or ValueError:
                 logger.warning(f'Не удалось собрать данные для блюда {dish.dish_name} {dish.href}')
                 continue
-            dish.portions_value = dish_info.portions_value
+            dish.portions_count = dish_info.portions_value
             dish.calories = dish_info.calories
             dish.save()
             fill_ingredients(dish=dish, ingredients=dish_info.ingredients)
@@ -215,13 +216,32 @@ def fill_recipes_info():
             time.sleep(0.1)
 
 
+def get_photo(url):
+    html = requests.get(url)
+    soup = BeautifulSoup(html.text, 'lxml')
+    try:
+        photo_url = soup.find('img', class_='main-img').get('src')
+    except AttributeError:
+        photo_url = None
+    return photo_url
+
+
+def fill_photos():
+    dishes = DjangoDish.select()
+    for dish in dishes:
+        photo_url = get_photo(dish.href)
+        if photo_url:
+            dish.photo = photo_url
+            print(dish.dish_name)
+            dish.save()
+
+
 if __name__ == '__main__':
     # cat_urls = get_category_urls()
     # for dish in get_dish_urls(cat_urls=cat_urls):
     #     fill_dish_table(dish=dish)
-    fill_recipes_info()
-
-
+    # fill_recipes_info()
+    fill_photos()
 
 
 
