@@ -35,7 +35,6 @@ def format_message(week_menu: list[dict]) -> str:
     return string_menu
 
 
-
 async def command_start(message: types.Message):
     await bot.send_message(message.from_user.id, 'Привет! Я могу помочь составить меню на неделю.\n'
                                                  'для начала нажми на "start"')

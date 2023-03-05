@@ -162,6 +162,7 @@ class FoodRecipe(BaseModel1):
     class Meta:
         table_name = 'food_recipe'
 
+
 class FoodTagMeal(BaseModel1):
     meal = ForeignKeyField(column_name='meal_id', field='id', model=FoodMeal)
     tag = ForeignKeyField(column_name='tag_id', field='id', model=FoodTag)
@@ -209,17 +210,12 @@ def create_ears():
     preserves = StoreDepartment.create(department_name='preserves')
     nuts = StoreDepartment.create(department_name='nuts')
 
+
 def migrate_dish():
     table1 = Dish.select().dicts()
     table2 = FoodDish
     for dish in table1:
-        # dish['dish_id'] = dish.pop('dish_name_id')
-        # dish['tag_id'] = dish.pop('tag_name_id')
-        # print(dish.id)
-        try:
-            table2.create(**dish)
-        except:
-            pass
+        table2.create(**dish)
 
 
 def migrate_ingridients():
@@ -231,16 +227,15 @@ def migrate_ingridients():
         print(dish)
         table2.create(**dish)
 
+
 def migrate_recipe():
     table1 = Recipe.select().dicts()
     table2 = FoodRecipe
     for dish in table1:
-        # dish['dish_id'] = dish.pop('dish_name_id')
-        # dish['tag_id'] = dish.pop('tag_name_id')
-        try:
-            table2.create(**dish)
-        except:
-            pass
+        dish['dish_id'] = dish.pop('dish_name_id')
+        dish['ingredient_id'] = dish.pop('ingredient_name_id')
+        table2.create(**dish)
+
 
 def migrate_tags():
     table1 = Tag.select().dicts()
@@ -251,11 +246,24 @@ def migrate_tags():
         # print(dish.id)
         table2.create(**dish)
 
+
+def migrate_dish_tags():
+    table1 = LnkDishTag.select().dicts()
+    table2 = FoodDishTags
+    for dish in table1:
+        print(dish)
+        dish['dish_id'] = dish.pop('dish_name_id')
+        dish['tag_id'] = dish.pop('tag_name_id')
+        table2.create(**dish)
+
+
 def make_migration():
     # migrate_dish()
     # migrate_ingridients()
-    # migrate_recipe()
-    migrate_tags()
+    migrate_recipe()
+    # migrate_dish_tags()
+    # migrate_dish_tags()
+
 
 def main():
     make_migration()
